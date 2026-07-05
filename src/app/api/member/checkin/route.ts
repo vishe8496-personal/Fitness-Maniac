@@ -2,7 +2,7 @@ import { NextRequest } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabaseAdmin';
 import { getMember, verifyMemberToken } from '@/lib/session';
 import { checkGeofence } from '@/lib/geo';
-import { statusFromEndDate } from '@/lib/dates';
+import { statusFromEndDate, startOfLocalDayUtc } from '@/lib/dates';
 import { ok, err } from '@/lib/api';
 
 export const runtime = 'nodejs';
@@ -56,9 +56,8 @@ export async function POST(req: NextRequest) {
     });
   }
 
-  // Prevent duplicate check-ins on the same UTC day.
-  const now = new Date();
-  const startOfDay = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+  // Prevent duplicate check-ins on the same gym-local (IST) calendar day.
+  const startOfDay = startOfLocalDayUtc();
   const { data: existing } = await sb
     .from('attendance')
     .select('id, ts')

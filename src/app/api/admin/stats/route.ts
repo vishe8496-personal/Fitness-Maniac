@@ -1,6 +1,6 @@
 import { supabaseAdmin } from '@/lib/supabaseAdmin';
 import { getAdmin } from '@/lib/session';
-import { statusFromEndDate, daysUntil } from '@/lib/dates';
+import { statusFromEndDate, daysUntil, nowLocal, startOfLocalDayUtc } from '@/lib/dates';
 import { ok, err } from '@/lib/api';
 
 export const runtime = 'nodejs';
@@ -13,7 +13,7 @@ export async function GET() {
   const { data: members, error } = await sb.from('members').select('id, name, mobile, end_date');
   if (error) return err('Server error', 500);
 
-  const today = new Date();
+  const today = nowLocal();
   const all = members ?? [];
 
   let active = 0, expiring = 0, expired = 0;
@@ -31,8 +31,8 @@ export async function GET() {
   }
   expiringSoon.sort((a, b) => a.days_until_end - b.days_until_end);
 
-  // Today's attendance: unique members who checked in since local-day start (UTC).
-  const startOfDay = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate()));
+  // Today's attendance: unique members who checked in since gym-local (IST) midnight.
+  const startOfDay = startOfLocalDayUtc();
   const { data: todayRows } = await sb
     .from('attendance')
     .select('member_id')

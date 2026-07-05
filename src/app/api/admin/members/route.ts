@@ -1,7 +1,7 @@
 import { NextRequest } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabaseAdmin';
 import { getAdmin } from '@/lib/session';
-import { addMonthsClamped, toISODate, statusFromEndDate } from '@/lib/dates';
+import { addMonthsClamped, toISODate, statusFromEndDate, nowLocal } from '@/lib/dates';
 import { normalizeMobile } from '@/lib/mobile';
 import { ok, err } from '@/lib/api';
 
@@ -21,7 +21,7 @@ export async function GET(req: NextRequest) {
   const { data, error } = await query;
   if (error) return err('Server error', 500);
 
-  const today = new Date();
+  const today = nowLocal();
   let members = (data ?? []).map((m) => ({
     ...m,
     status: statusFromEndDate(m.end_date, today),
@@ -45,7 +45,8 @@ export async function POST(req: NextRequest) {
   if (!Number.isInteger(months) || months < 1 || months > 60)
     return err('Subscription months must be between 1 and 60');
 
-  const start = new Date();
+  // "Today" on the gym's local calendar (IST), not UTC.
+  const start = nowLocal();
   const startDate = toISODate(start);
   const endDate = toISODate(addMonthsClamped(start, months));
 

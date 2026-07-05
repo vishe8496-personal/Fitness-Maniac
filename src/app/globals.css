@@ -156,6 +156,27 @@ tr.clickable:hover td { background: var(--panel-2); }
 }
 @keyframes spin { to { transform: rotate(360deg); } }
 
+.tabs {
+  display: flex;
+  gap: 0;
+  border-bottom: 1px solid var(--border);
+}
+.tab {
+  background: transparent;
+  color: var(--muted);
+  border: none;
+  border-bottom: 2px solid transparent;
+  border-radius: 0;
+  padding: 10px 18px;
+  font-size: 0.95rem;
+}
+.tab:hover { background: transparent; color: var(--text); }
+.tab.active {
+  color: var(--primary);
+  border-bottom-color: var(--primary);
+  font-weight: 700;
+}
+
 .topbar {
   display: flex; align-items: center; justify-content: space-between;
   margin-bottom: 20px;

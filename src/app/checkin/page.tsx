@@ -101,12 +101,7 @@ export default function CheckIn() {
         const n = data.checkinsToday ?? 1;
         setLimitReached(n >= max);
         if (data.alreadyCheckedIn) {
-          setResult({
-            ok: true,
-            message: max > 1
-              ? `You've used all ${max} check-ins for today.`
-              : "You're already checked in today. See you tomorrow! 💪",
-          });
+          setResult({ ok: true, message: "You're already checked in. See you next time! 💪" });
         } else {
           setResult({
             ok: true,
@@ -171,14 +166,9 @@ export default function CheckIn() {
             {geo.kind === 'error' && <div className="alert error">{geo.message}</div>}
 
             {geo.kind === 'ready' && (
-              <>
-                <div className={`alert ${within ? 'ok' : 'error'}`}>
-                  {within
-                    ? `✓ You're at ${gym?.name}. Distance ~${Math.round(geo.distanceM)}m.`
-                    : `You're not at the gym. You're ~${Math.round(geo.distanceM)}m away (must be within ${gym?.radius_m}m).`}
-                </div>
-                <p className="muted small">Location accuracy ~{Math.round(geo.accuracy)}m.</p>
-              </>
+              <div className={`alert ${within ? 'ok' : 'error'}`}>
+                {within ? `✓ You're at ${gym?.name}.` : "You're not at the gym."}
+              </div>
             )}
 
             {result && (

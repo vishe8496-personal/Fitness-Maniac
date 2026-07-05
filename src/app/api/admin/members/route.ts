@@ -39,6 +39,7 @@ export async function POST(req: NextRequest) {
   const name = String(body.name || '').trim();
   const months = Number(body.subscription_months);
   const mobile = normalizeMobile(String(body.mobile || ''));
+  const role = body.role === 'coach' ? 'coach' : 'member';
 
   if (!name) return err('Name is required');
   if (!mobile) return err('Valid mobile number is required');
@@ -59,6 +60,7 @@ export async function POST(req: NextRequest) {
       start_date: startDate,
       end_date: endDate,
       subscription_months: months,
+      role,
       status: statusFromEndDate(endDate, start),
     })
     .select('*')

@@ -11,6 +11,7 @@ interface Member {
   status: 'active' | 'expiring' | 'expired';
   days_until_end: number;
   subscription_months?: number;
+  role?: 'member' | 'coach';
 }
 interface Entry { id: string; ts: string; source: string; }
 
@@ -106,7 +107,10 @@ export default function MemberDetail({
         style={{ width: '100%', maxWidth: 560 }}
       >
         <div className="row between">
-          <h2 style={{ margin: 0 }}>{member?.name || 'Member'}</h2>
+          <h2 style={{ margin: 0 }}>
+            {member?.name || 'Member'}
+            {member?.role === 'coach' && <span className="badge coach" style={{ marginLeft: 8 }}>coach</span>}
+          </h2>
           <button className="ghost" style={{ padding: '6px 12px' }} onClick={onClose}>Close</button>
         </div>
 

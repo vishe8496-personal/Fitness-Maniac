@@ -108,6 +108,7 @@ button.block { width: 100%; }
 .badge.active { background: rgba(47,191,113,0.15); color: var(--green); }
 .badge.expiring { background: rgba(245,166,35,0.15); color: var(--amber); }
 .badge.expired { background: rgba(239,75,107,0.15); color: var(--red); }
+.badge.coach { background: rgba(79,140,255,0.15); color: var(--primary); }
 
 table { width: 100%; border-collapse: collapse; }
 th, td { text-align: left; padding: 10px 8px; border-bottom: 1px solid var(--border); font-size: 0.92rem; }

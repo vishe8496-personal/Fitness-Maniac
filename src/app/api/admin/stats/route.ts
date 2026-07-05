@@ -10,7 +10,9 @@ export async function GET() {
   if (!(await getAdmin())) return err('Unauthorized', 401);
 
   const sb = supabaseAdmin();
-  const { data: members, error } = await sb.from('members').select('id, name, mobile, end_date');
+  const { data: members, error } = await sb
+    .from('members')
+    .select('id, name, mobile, end_date, role');
   if (error) return err('Server error', 500);
 
   const today = nowLocal();
@@ -38,13 +40,20 @@ export async function GET() {
     .select('member_id')
     .gte('ts', startOfDay.toISOString());
 
-  const uniqueToday = new Set((todayRows ?? []).map((r) => r.member_id));
-  const notExpired = active + expiring;
-  const attendancePct = notExpired > 0 ? Math.round((uniqueToday.size / notExpired) * 100) : 0;
+  // Attendance % is a members-only metric — coaches don't count toward it.
+  const memberIds = new Set(all.filter((m) => m.role !== 'coach').map((m) => m.id));
+  const uniqueToday = new Set(
+    (todayRows ?? []).map((r) => r.member_id).filter((id) => memberIds.has(id))
+  );
+  const eligibleMembers = all.filter(
+    (m) => m.role !== 'coach' && statusFromEndDate(m.end_date, today) !== 'expired'
+  ).length;
+  const attendancePct =
+    eligibleMembers > 0 ? Math.round((uniqueToday.size / eligibleMembers) * 100) : 0;
 
   return ok({
     counts: { total: all.length, active, expiring, expired },
-    today: { present: uniqueToday.size, eligible: notExpired, pct: attendancePct },
+    today: { present: uniqueToday.size, eligible: eligibleMembers, pct: attendancePct },
     expiringSoon,
   });
 }

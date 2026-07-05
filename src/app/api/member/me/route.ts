@@ -23,7 +23,7 @@ export async function GET(req: NextRequest) {
   const sb = supabaseAdmin();
   const { data: member, error } = await sb
     .from('members')
-    .select('id, name, mobile, start_date, end_date')
+    .select('id, name, mobile, start_date, end_date, role')
     .eq('id', claims.sub)
     .maybeSingle();
 

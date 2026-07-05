@@ -7,6 +7,7 @@ export default function RegisterMember() {
   const [name, setName] = useState('');
   const [mobile, setMobile] = useState('');
   const [months, setMonths] = useState(1);
+  const [role, setRole] = useState<'member' | 'coach'>('member');
   const [error, setError] = useState('');
   const [ok, setOk] = useState<null | { name: string; start_date: string; end_date: string }>(null);
   const [loading, setLoading] = useState(false);
@@ -20,7 +21,7 @@ export default function RegisterMember() {
       const res = await fetch('/api/admin/members', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, mobile, subscription_months: months }),
+        body: JSON.stringify({ name, mobile, subscription_months: months, role }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Failed to register');
@@ -28,6 +29,7 @@ export default function RegisterMember() {
       setName('');
       setMobile('');
       setMonths(1);
+      setRole('member');
     } catch (err: any) {
       setError(err.message);
     } finally {
@@ -52,7 +54,13 @@ export default function RegisterMember() {
           <label>Mobile number</label>
           <input value={mobile} onChange={(e) => setMobile(e.target.value)} inputMode="tel" placeholder="e.g. 9876543210" />
 
-          <label>Subscription (months)</label>
+          <label>Role</label>
+          <select value={role} onChange={(e) => setRole(e.target.value as 'member' | 'coach')}>
+            <option value="member">Member — 1 check-in/day</option>
+            <option value="coach">Coach — up to 4 check-ins/day</option>
+          </select>
+
+          <label>{role === 'coach' ? 'Engagement period (months)' : 'Subscription (months)'}</label>
           <select value={months} onChange={(e) => setMonths(Number(e.target.value))}>
             {[1, 2, 3, 6, 12].map((m) => (
               <option key={m} value={m}>{m} month{m > 1 ? 's' : ''}</option>

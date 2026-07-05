@@ -15,6 +15,8 @@ create table if not exists public.members (
   subscription_months int    not null default 1,
   -- status is derived on read; kept here only as an optional cached value.
   status        text        not null default 'active',
+  -- 'member' checks in once/day; 'coach' up to 4 times/day.
+  role          text        not null default 'member' check (role in ('member', 'coach')),
   created_at    timestamptz not null default now()
 );
 

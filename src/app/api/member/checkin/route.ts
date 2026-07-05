@@ -33,7 +33,7 @@ export async function POST(req: NextRequest) {
   // Membership must be valid (not expired).
   const { data: member } = await sb
     .from('members')
-    .select('id, end_date')
+    .select('id, end_date, role')
     .eq('id', claims.sub)
     .maybeSingle();
   if (!member) return err('Member not found', 404);
@@ -56,17 +56,27 @@ export async function POST(req: NextRequest) {
     });
   }
 
-  // Prevent duplicate check-ins on the same gym-local (IST) calendar day.
+  // Daily limit on the gym-local (IST) calendar day:
+  // members check in once, coaches up to 4 times (shift starts/ends).
+  const maxPerDay = member.role === 'coach' ? 4 : 1;
   const startOfDay = startOfLocalDayUtc();
-  const { data: existing } = await sb
+  const { data: todays } = await sb
     .from('attendance')
     .select('id, ts')
     .eq('member_id', member.id)
     .gte('ts', startOfDay.toISOString())
-    .limit(1);
+    .order('ts', { ascending: false });
 
-  if (existing && existing.length > 0) {
-    return ok({ alreadyCheckedIn: true, entry: existing[0], distanceM: Math.round(fence.distanceM) });
+  const countToday = todays?.length ?? 0;
+  if (countToday >= maxPerDay) {
+    return ok({
+      alreadyCheckedIn: true,
+      entry: todays![0],
+      checkinsToday: countToday,
+      maxPerDay,
+      role: member.role,
+      distanceM: Math.round(fence.distanceM),
+    });
   }
 
   const { data: entry, error } = await sb
@@ -76,5 +86,15 @@ export async function POST(req: NextRequest) {
     .single();
   if (error) return err('Server error', 500);
 
-  return ok({ checkedIn: true, entry, distanceM: Math.round(fence.distanceM) }, { status: 201 });
+  return ok(
+    {
+      checkedIn: true,
+      entry,
+      checkinsToday: countToday + 1,
+      maxPerDay,
+      role: member.role,
+      distanceM: Math.round(fence.distanceM),
+    },
+    { status: 201 }
+  );
 }

@@ -7,6 +7,7 @@ import { haversineMeters } from '@/lib/geo';
 interface Member {
   id: string; name: string; mobile: string; end_date: string;
   status: 'active' | 'expiring' | 'expired'; days_until_end: number;
+  role?: 'member' | 'coach';
 }
 interface Gym { name: string; lat: number; lng: number; radius_m: number; }
 
@@ -30,6 +31,9 @@ export default function CheckIn() {
   const [geo, setGeo] = useState<GeoState>({ kind: 'idle' });
   const [result, setResult] = useState<{ ok: boolean; message: string } | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  // Daily-limit tracking (coaches can check in multiple times).
+  const [limitReached, setLimitReached] = useState(false);
+  const [todayCount, setTodayCount] = useState<{ n: number; max: number } | null>(null);
 
   // Bootstrap: verify session + load gym.
   useEffect(() => {
@@ -93,10 +97,26 @@ export default function CheckIn() {
       const data = await res.json();
       if (!res.ok) {
         setResult({ ok: false, message: data.error || 'Check-in failed' });
-      } else if (data.alreadyCheckedIn) {
-        setResult({ ok: true, message: "You're already checked in today. See you tomorrow! 💪" });
       } else {
-        setResult({ ok: true, message: 'Attendance marked. Have a great workout! 💪' });
+        const max = data.maxPerDay ?? 1;
+        const n = data.checkinsToday ?? 1;
+        setTodayCount({ n, max });
+        setLimitReached(n >= max);
+        if (data.alreadyCheckedIn) {
+          setResult({
+            ok: true,
+            message: max > 1
+              ? `You've used all ${max} check-ins for today.`
+              : "You're already checked in today. See you tomorrow! 💪",
+          });
+        } else {
+          setResult({
+            ok: true,
+            message: max > 1
+              ? `Check-in ${n}/${max} marked. 💪`
+              : 'Attendance marked. Have a great workout! 💪',
+          });
+        }
       }
     } catch {
       setResult({ ok: false, message: 'Network error. Try again.' });
@@ -125,10 +145,14 @@ export default function CheckIn() {
           <button className="ghost" style={{ padding: '6px 12px' }} onClick={logout}>Logout</button>
         </div>
 
-        <h1 style={{ marginTop: 14 }}>Hi {member?.name?.split(' ')[0]} 👋</h1>
+        <h1 style={{ marginTop: 14 }}>
+          Hi {member?.name?.split(' ')[0]} 👋
+          {member?.role === 'coach' && <span className="badge coach" style={{ marginLeft: 8, verticalAlign: 'middle' }}>coach</span>}
+        </h1>
         {member && (
           <p className="muted small">
-            Membership <span className={`badge ${member.status}`}>{member.status}</span>
+            {member.role === 'coach' ? 'Engagement' : 'Membership'}{' '}
+            <span className={`badge ${member.status}`}>{member.status}</span>
             {member.status !== 'expired'
               ? ` · ${member.days_until_end} day${member.days_until_end === 1 ? '' : 's'} left`
               : ' · please renew'}
@@ -162,11 +186,14 @@ export default function CheckIn() {
             {result && (
               <div className={`alert ${result.ok ? 'ok' : 'error'}`}>{result.message}</div>
             )}
+            {todayCount && todayCount.max > 1 && (
+              <p className="muted small">Today: {todayCount.n}/{todayCount.max} check-ins used.</p>
+            )}
 
             <div style={{ marginTop: 16 }} className="stack">
               <button
                 className="big-btn"
-                disabled={!within || submitting || (result?.ok ?? false)}
+                disabled={!within || submitting || limitReached}
                 onClick={markAttendance}
               >
                 {submitting ? <span className="spinner" /> : 'Mark Attendance'}

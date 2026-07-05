@@ -12,6 +12,7 @@ interface Member {
   start_date: string;
   end_date: string;
   status: 'active' | 'expiring' | 'expired';
+  role?: 'member' | 'coach';
 }
 
 interface Stats {
@@ -164,7 +165,10 @@ export default function Dashboard() {
             <tbody>
               {members.map((m) => (
                 <tr key={m.id} className="clickable" onClick={() => setSelected(m.id)}>
-                  <td><strong>{m.name}</strong></td>
+                  <td>
+                    <strong>{m.name}</strong>
+                    {m.role === 'coach' && <span className="badge coach" style={{ marginLeft: 8 }}>coach</span>}
+                  </td>
                   <td className="muted">{m.mobile}</td>
                   <td>{m.end_date}</td>
                   <td><span className={`badge ${m.status}`}>{m.status}</span></td>

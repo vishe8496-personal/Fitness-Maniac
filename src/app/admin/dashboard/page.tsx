@@ -46,7 +46,8 @@ export default function Dashboard() {
   const [selected, setSelected] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // Visits chart state
+  // Visits chart state (collapsed by default; loads on first open)
+  const [showVisits, setShowVisits] = useState(false);
   const [fromDate, setFromDate] = useState(() => isoDaysAgo(13));
   const [toDate, setToDate] = useState(() => isoDaysAgo(0));
   const [visits, setVisits] = useState<Visits | null>(null);
@@ -84,7 +85,7 @@ export default function Dashboard() {
   }, [fromDate, toDate, router]);
 
   useEffect(() => { loadStats(); }, [loadStats]);
-  useEffect(() => { loadVisits(); }, [loadVisits]);
+  useEffect(() => { if (showVisits) loadVisits(); }, [showVisits, loadVisits]);
 
   useEffect(() => {
     const t = setTimeout(loadMembers, 250); // debounce search
@@ -138,42 +139,50 @@ export default function Dashboard() {
         </div>
       )}
 
-      {/* Visits chart with date filter */}
+      {/* Visits chart (collapsed by default) */}
       <div className="card">
-        <div className="row between wrap" style={{ marginBottom: 10 }}>
+        <div className="row between wrap">
           <h2 style={{ margin: 0 }}>Visits</h2>
-          <div className="row wrap" style={{ gap: 8 }}>
-            <input
-              type="date"
-              value={fromDate}
-              max={toDate}
-              onChange={(e) => setFromDate(e.target.value)}
-              style={{ width: 150, padding: '8px 10px' }}
-            />
-            <span className="muted small">to</span>
-            <input
-              type="date"
-              value={toDate}
-              min={fromDate}
-              onChange={(e) => setToDate(e.target.value)}
-              style={{ width: 150, padding: '8px 10px' }}
-            />
-          </div>
+          <button className="ghost" style={{ padding: '8px 16px', fontSize: '0.88rem' }} onClick={() => setShowVisits(!showVisits)}>
+            {showVisits ? 'Hide graph' : '📊 View graph'}
+          </button>
         </div>
 
-        {visitsError && <div className="alert error">{visitsError}</div>}
-        {visits && (
-          <>
-            <p className="muted small" style={{ margin: '0 0 10px' }}>
-              <strong style={{ color: 'var(--text)' }}>{visits.totals.uniqueMembers}</strong> unique member{visits.totals.uniqueMembers === 1 ? '' : 's'} visited ·{' '}
-              <strong style={{ color: 'var(--text)' }}>{visits.totals.memberVisits}</strong> total visit{visits.totals.memberVisits === 1 ? '' : 's'}
-            </p>
-            <VisitsChart days={visits.days} />
-            <div className="row" style={{ gap: 14, marginTop: 6 }}>
-              <span className="muted small"><span style={{ display: 'inline-block', width: 10, height: 10, background: 'var(--primary)', borderRadius: 2, marginRight: 5 }} />Members</span>
-              <span className="muted small"><span style={{ display: 'inline-block', width: 10, height: 10, background: 'var(--amber)', borderRadius: 2, marginRight: 5 }} />Coach visits</span>
+        {showVisits && (
+          <div style={{ marginTop: 16 }}>
+            <div className="row wrap" style={{ gap: 8, marginBottom: 12 }}>
+              <input
+                type="date"
+                value={fromDate}
+                max={toDate}
+                onChange={(e) => setFromDate(e.target.value)}
+                style={{ width: 150, padding: '8px 10px' }}
+              />
+              <span className="muted small">to</span>
+              <input
+                type="date"
+                value={toDate}
+                min={fromDate}
+                onChange={(e) => setToDate(e.target.value)}
+                style={{ width: 150, padding: '8px 10px' }}
+              />
             </div>
-          </>
+
+            {visitsError && <div className="alert error">{visitsError}</div>}
+            {visits && (
+              <>
+                <p className="muted small" style={{ margin: '0 0 10px' }}>
+                  <strong style={{ color: 'var(--text)' }}>{visits.totals.uniqueMembers}</strong> unique member{visits.totals.uniqueMembers === 1 ? '' : 's'} visited ·{' '}
+                  <strong style={{ color: 'var(--text)' }}>{visits.totals.memberVisits}</strong> total visit{visits.totals.memberVisits === 1 ? '' : 's'}
+                </p>
+                <VisitsChart days={visits.days} />
+                <div className="row" style={{ gap: 14, marginTop: 6 }}>
+                  <span className="muted small"><span style={{ display: 'inline-block', width: 10, height: 10, background: 'var(--primary)', borderRadius: 2, marginRight: 5 }} />Members</span>
+                  <span className="muted small"><span style={{ display: 'inline-block', width: 10, height: 10, background: 'var(--amber)', borderRadius: 2, marginRight: 5 }} />Coach visits</span>
+                </div>
+              </>
+            )}
+          </div>
         )}
       </div>
 

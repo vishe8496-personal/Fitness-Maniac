@@ -5,26 +5,26 @@ import { useRouter } from 'next/navigation';
 
 export default function MemberLogin() {
   const router = useRouter();
-  const [step, setStep] = useState<'mobile' | 'code'>('mobile');
+  const [step, setStep] = useState<'mobile' | 'confirm'>('mobile');
   const [mobile, setMobile] = useState('');
-  const [code, setCode] = useState('');
+  const [firstName, setFirstName] = useState('');
   const [error, setError] = useState('');
-  const [info, setInfo] = useState('');
   const [loading, setLoading] = useState(false);
 
-  async function sendCode(e: React.FormEvent) {
+  async function lookup(e: React.FormEvent) {
     e.preventDefault();
-    setError(''); setInfo(''); setLoading(true);
+    setError('');
+    setLoading(true);
     try {
-      const res = await fetch('/api/member/otp/send', {
+      const res = await fetch('/api/member/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ mobile }),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Failed to send code');
-      setStep('code');
-      setInfo('We sent a 6-digit code to your phone.');
+      if (!res.ok) throw new Error(data.error || 'Login failed');
+      setFirstName(data.firstName);
+      setStep('confirm');
     } catch (err: any) {
       setError(err.message);
     } finally {
@@ -32,23 +32,22 @@ export default function MemberLogin() {
     }
   }
 
-  async function verify(e: React.FormEvent) {
-    e.preventDefault();
-    setError(''); setLoading(true);
+  async function confirm() {
+    setError('');
+    setLoading(true);
     try {
-      const res = await fetch('/api/member/otp/verify', {
+      const res = await fetch('/api/member/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ mobile, code }),
+        body: JSON.stringify({ mobile, confirmed: true }),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Verification failed');
+      if (!res.ok) throw new Error(data.error || 'Login failed');
       // Persist a backup session token in localStorage (cookie is set too).
       if (data.token) localStorage.setItem('gm_member_token', data.token);
       router.replace('/checkin');
     } catch (err: any) {
       setError(err.message);
-    } finally {
       setLoading(false);
     }
   }
@@ -61,7 +60,7 @@ export default function MemberLogin() {
         <p className="muted small">One-time login. We&apos;ll remember you on this device.</p>
 
         {step === 'mobile' ? (
-          <form onSubmit={sendCode}>
+          <form onSubmit={lookup}>
             <label>Mobile number</label>
             <input
               value={mobile}
@@ -73,38 +72,30 @@ export default function MemberLogin() {
             {error && <div className="alert error">{error}</div>}
             <div style={{ marginTop: 18 }}>
               <button className="block" disabled={loading}>
-                {loading ? <span className="spinner" /> : 'Send code'}
+                {loading ? <span className="spinner" /> : 'Continue'}
               </button>
             </div>
           </form>
         ) : (
-          <form onSubmit={verify}>
-            {info && <div className="alert ok">{info}</div>}
-            <label>Enter code</label>
-            <input
-              value={code}
-              onChange={(e) => setCode(e.target.value.replace(/\D/g, ''))}
-              inputMode="numeric"
-              maxLength={6}
-              placeholder="6-digit code"
-              autoFocus
-              style={{ letterSpacing: '0.4em', textAlign: 'center', fontSize: '1.4rem' }}
-            />
+          <div>
+            <div className="alert ok" style={{ fontSize: '1rem' }}>
+              You&apos;re logging in as <strong>{firstName}</strong> — that you?
+            </div>
             {error && <div className="alert error">{error}</div>}
-            <div style={{ marginTop: 18 }}>
-              <button className="block" disabled={loading}>
-                {loading ? <span className="spinner" /> : 'Verify & continue'}
+            <div style={{ marginTop: 18 }} className="stack">
+              <button className="block" onClick={confirm} disabled={loading}>
+                {loading ? <span className="spinner" /> : `Yes, I'm ${firstName}`}
+              </button>
+              <button
+                type="button"
+                className="ghost block"
+                onClick={() => { setStep('mobile'); setError(''); setFirstName(''); }}
+                disabled={loading}
+              >
+                No, change number
               </button>
             </div>
-            <button
-              type="button"
-              className="ghost block"
-              style={{ marginTop: 10 }}
-              onClick={() => { setStep('mobile'); setCode(''); setError(''); }}
-            >
-              Change number
-            </button>
-          </form>
+          </div>
         )}
       </div>
     </div>

@@ -37,8 +37,8 @@ cp .env.local.example .env.local   # then fill in the values
 | `NEXT_PUBLIC_SUPABASE_URL` | Supabase project URL |
 | `SUPABASE_SERVICE_ROLE_KEY` | Service role key (server-only; bypasses RLS) |
 | `ADMIN_JWT_SECRET` / `MEMBER_JWT_SECRET` / `OTP_HASH_SECRET` | Long random strings (`node -e "console.log(require('crypto').randomBytes(48).toString('hex'))"`) |
-| `OTP_PROVIDER` | `mock` (dev — logs OTP to console), `msg91`, or `twilio` |
-| `MSG91_*` / `TWILIO_*` | Credentials for the chosen provider |
+| `OTP_PROVIDER` | Only used by the dormant OTP routes: `mock` (dev — logs OTP to console), `msg91`, or `twilio` |
+| `MSG91_*` / `TWILIO_*` | Credentials for the chosen provider (only if re-enabling OTP) |
 | `DEFAULT_COUNTRY_CODE` | e.g. `91` — prepended to bare local mobile numbers |
 
 ### Run
@@ -56,7 +56,7 @@ In `mock` OTP mode the code is printed to the **server terminal** — no SMS nee
 | `/admin/login` | Admin | Password login (bcrypt, 12h session cookie) |
 | `/admin/register` | Admin | Register member — end date auto-calculated (same day-of-month + N months, clamped to the last valid day of shorter months) |
 | `/admin/dashboard` | Admin | Member list + search/filter, today's attendance %, expiring-in-7-days highlight, per-member attendance history, manual add/remove attendance |
-| `/login` | Member | One-time OTP login → 180-day session (httpOnly cookie + localStorage backup) |
+| `/login` | Member | One-time login: mobile number + "that you?" confirm → 180-day session (httpOnly cookie + localStorage backup). No SMS needed — the server-validated GPS geofence is the real gate. Dormant OTP routes (`/api/member/otp/*`) remain if SMS verification is ever wanted |
 | `/checkin` | Member | Auto-logged-in; GPS + Haversine geofence. "Mark Attendance" enabled only within radius; server re-validates on submit |
 
 ---

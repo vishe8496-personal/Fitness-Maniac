@@ -56,8 +56,8 @@ export default function RegisterMember() {
 
           <label>Role</label>
           <select value={role} onChange={(e) => setRole(e.target.value as 'member' | 'coach')}>
-            <option value="member">Member — 1 check-in/day</option>
-            <option value="coach">Coach — up to 4 check-ins/day</option>
+            <option value="member">Member</option>
+            <option value="coach">Coach</option>
           </select>
 
           <label>{role === 'coach' ? 'Engagement period (months)' : 'Subscription (months)'}</label>

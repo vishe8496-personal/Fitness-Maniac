@@ -33,7 +33,6 @@ export default function CheckIn() {
   const [submitting, setSubmitting] = useState(false);
   // Daily-limit tracking (coaches can check in multiple times).
   const [limitReached, setLimitReached] = useState(false);
-  const [todayCount, setTodayCount] = useState<{ n: number; max: number } | null>(null);
 
   // Bootstrap: verify session + load gym.
   useEffect(() => {
@@ -100,7 +99,6 @@ export default function CheckIn() {
       } else {
         const max = data.maxPerDay ?? 1;
         const n = data.checkinsToday ?? 1;
-        setTodayCount({ n, max });
         setLimitReached(n >= max);
         if (data.alreadyCheckedIn) {
           setResult({
@@ -185,9 +183,6 @@ export default function CheckIn() {
 
             {result && (
               <div className={`alert ${result.ok ? 'ok' : 'error'}`}>{result.message}</div>
-            )}
-            {todayCount && todayCount.max > 1 && (
-              <p className="muted small">Today: {todayCount.n}/{todayCount.max} check-ins used.</p>
             )}
 
             <div style={{ marginTop: 16 }} className="stack">
